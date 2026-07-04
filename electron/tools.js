@@ -6,7 +6,7 @@ const fs = require('fs');
 const fsp = fs.promises;
 const os = require('os');
 const path = require('path');
-const { getSkillTools } = require('./skills');
+const { getSkillTools, loadSkills, SKILLS_DIR } = require('./skills');
 
 // 浏览器自动化（延迟加载，避免启动开销）
 let puppeteer = null;
@@ -374,6 +374,23 @@ const TOOLS = [
       },
       required: ['recording_id'],
     },
+  },
+  {
+    name: 'install_skill',
+    description: '安装一个新的 Skill（技能/插件）。创建一个 .js 文件到 ~/.ai-assistant/skills/ 目录，skill 中可以注册自定义工具和增强提示词。格式见 skill 模板。',
+    input_schema: {
+      type: 'object',
+      properties: {
+        filename: { type: 'string', description: 'Skill 文件名，如 my-skill.js' },
+        content: { type: 'string', description: 'Skill 的完整 JavaScript 代码（module.exports = {...}）' },
+      },
+      required: ['filename', 'content'],
+    },
+  },
+  {
+    name: 'reload_skills',
+    description: '重新加载所有 Skill（安装新 skill 后调用，无需重启 app 即可生效）。',
+    input_schema: { type: 'object', properties: {} },
   },
 ];
 
@@ -887,6 +904,15 @@ async function executeTool(name, input, ctx) {
         return await startRecording(input, ctx);
       case 'stop_recording':
         return await stopRecording(input, ctx);
+      case 'install_skill': {
+        const skillPath = path.join(SKILLS_DIR, input.filename.replace(/\.js$/i, '') + '.js');
+        await fsp.writeFile(skillPath, input.content, 'utf8');
+        loadSkills(); // 立即加载
+        return { text: `✅ Skill 已安装：${skillPath}\n已自动重新加载，无需重启。` };
+      }
+      case 'reload_skills':
+        loadSkills();
+        return { text: '✅ 已重新加载所有 Skill。' };
       default:
         // 尝试执行 Skill 工具
         const skillTools = getSkillTools();

@@ -23,6 +23,7 @@ function systemPrompt(config) {
     '- **屏幕录制**：`start_recording` 开始录屏（记录你的浏览器操作过程）→ 执行任务 → `stop_recording` 保存视频。仅在用户明确要求录屏时使用。',
     '- **联网**（Claude 专属）：`web_search` 搜索、`web_fetch` 抓网页，获取实时信息/文档。',
     '- **截屏**：`take_screenshot` 查看用户屏幕，`browser_screenshot` 查看浏览器页面。',
+    '- **Skill 安装**：`install_skill` 创建新 skill 到 `~/.ai-assistant/skills/`，`reload_skills` 重新加载。用户让你学新能力时，直接写 skill 安装即可，skill 可以注册自定义工具和增强提示词。',
     '',
     '# 行为准则',
     '- **先搜后改**：改代码前先 `grep_search` 定位准确位置，避免盲目猜测文件名/结构。',
