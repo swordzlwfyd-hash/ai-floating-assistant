@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI 悬浮球助手</title>
+  <link rel="stylesheet" href="../node_modules/@highlightjs/cdn-assets/styles/github-dark.min.css" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <!-- 收起状态：悬浮球 -->
+  <div id="ball" class="ball" title="点击打开 · 拖动移动 · Ctrl/⌘+Shift+空格 唤起">
+    <span class="ball-icon">AI</span>
+  </div>
+
+  <!-- 展开状态：对话面板 -->
+  <div id="panel" class="panel hidden">
+    <header class="panel-header" id="dragbar">
+      <div class="title">AI 助手</div>
+      <div class="actions">
+        <button id="newChatBtn" class="icon-btn" title="新对话">✚</button>
+        <button id="settingsBtn" class="icon-btn" title="设置">⚙</button>
+        <button id="collapseBtn" class="icon-btn" title="收起">—</button>
+      </div>
+    </header>
+
+    <!-- 设置面板 -->
+    <div id="settings" class="settings hidden">
+      <label class="field">模型服务商
+        <select id="provider">
+          <option value="anthropic">Claude（Anthropic · 最强，支持工具+联网）</option>
+          <option value="openai">OpenAI 兼容 / Ollama</option>
+        </select>
+      </label>
+
+      <div id="anthropicFields">
+        <label class="field">Claude 模型
+          <select id="anthropicModel">
+            <option value="claude-opus-4-8">claude-opus-4-8（推荐）</option>
+            <option value="claude-fable-5">claude-fable-5（最强，需组织开启 30 天数据保留）</option>
+            <option value="claude-sonnet-5">claude-sonnet-5（更快更省）</option>
+            <option value="claude-haiku-4-5">claude-haiku-4-5（最快最便宜）</option>
+          </select>
+        </label>
+        <label class="field">思考强度 (effort)
+          <select id="anthropicEffort">
+            <option value="low">low</option>
+            <option value="medium">medium</option>
+            <option value="high">high</option>
+            <option value="xhigh">xhigh</option>
+            <option value="max">max</option>
+          </select>
+        </label>
+        <label class="field">Anthropic API Key
+          <input id="anthropicKey" type="password" placeholder="sk-ant-..." />
+        </label>
+      </div>
+
+      <div id="openaiFields" class="hidden">
+        <label class="field">Base URL
+          <input id="openaiBase" type="text" placeholder="https://api.openai.com" />
+        </label>
+        <label class="field">模型名
+          <input id="openaiModel" type="text" placeholder="gpt-4o-mini" />
+        </label>
+        <label class="field">API Key
+          <input id="openaiKey" type="password" placeholder="sk-..." />
+        </label>
+      </div>
+
+      <label class="field">工作区目录（项目根，留空默认用户主目录）
+        <input id="workspace" type="text" placeholder="~/Desktop/my-project" />
+      </label>
+
+      <label class="field">录屏保存目录（留空默认桌面）
+        <input id="recordingsDir" type="text" placeholder="~/Desktop/Recordings" />
+      </label>
+
+      <div class="advanced-row">
+        <label class="field-half">最大循环轮数
+          <input id="maxTurns" type="number" min="10" max="500" placeholder="200" />
+        </label>
+        <label class="field-half">命令超时(秒)
+          <input id="commandTimeout" type="number" min="10" max="3600" placeholder="300" />
+        </label>
+      </div>
+
+      <label class="check"><input id="enableTools" type="checkbox" /> 允许调用工具（执行命令 / 读写文件 / 搜索 / 截屏）</label>
+      <label class="check"><input id="autoApproveModerate" type="checkbox" /> 自动放行中等风险操作（改文件 / git / 装依赖，推荐开启）</label>
+      <label class="check"><input id="autoApproveDangerous" type="checkbox" /> 自动放行危险操作（rm -rf / sudo 等，谨慎开启）</label>
+
+      <p class="hint">
+        <strong>智能信任分级</strong>：读文件/搜索永远直接执行；中等风险默认放行；危险操作默认弹窗确认（可上方全开）。<br />
+        OpenAI 兼容接口可填 DeepSeek / Kimi / 豆包 / Ollama 等。联网搜索为 Claude 专属。
+      </p>
+      <button id="saveSettings" class="primary-btn">保存</button>
+    </div>
+
+    <!-- 消息区 -->
+    <div id="messages" class="messages"></div>
+
+    <!-- 输入区 -->
+    <div class="input-area">
+      <textarea id="input" rows="1" placeholder="问点什么，或让我帮你做点什么…（回车发送，Shift+回车换行）"></textarea>
+      <button id="sendBtn" class="send-btn" title="发送">➤</button>
+      <button id="stopBtn" class="stop-btn hidden" title="停止">■</button>
+    </div>
+  </div>
+
+  <script src="../node_modules/markdown-it/dist/markdown-it.min.js"></script>
+  <script src="../node_modules/@highlightjs/cdn-assets/highlight.min.js"></script>
+  <script src="renderer.js"></script>
+</body>
+</html>
