@@ -1,13 +1,15 @@
-// 模型供应商适配层：Anthropic（Claude，全功能智能体）+ OpenAI 兼容（含 Ollama）。
-// 两者共用同一套工具执行器，都走「流式 + 工具调用循环」。
+// 模型供应商适配层：Anthropic（Claude，全功能智能体）+ OpenAI 兼容（含 Ollama）+ DeepSeek + Gemini + Kimi + 豆包。
+// 都共用同一套工具执行器，都走「流式 + 工具调用循环」。
 const Anthropic = require('@anthropic-ai/sdk');
 const OpenAI = require('openai');
+const { GoogleGenerativeAI } = require('@google/generative-ai');
 const { TOOLS, executeTool, summarizeToolInput } = require('./tools');
+const { getSkillPrompts } = require('./skills');
 
 function systemPrompt(config) {
   const today = new Date().toISOString().slice(0, 10);
   const workspace = config.workspace || '用户主目录';
-  return [
+  const basePrompt = [
     '你是一个常驻在用户桌面上的中文 AI 智能体助手——顶尖的编码 agent，风格干练、精确、直接、友好。',
     `今天是 ${today}。工作区：${workspace}（相对路径、搜索、命令 cwd 默认基于它）。`,
     '',
@@ -31,7 +33,11 @@ function systemPrompt(config) {
     '- **简洁汇报**：完成后一两句话说明结果（改了什么、测试是否通过），避免复读代码。',
     '- **不过度设计**：解决当前问题即可，不要加用户未要求的抽象/功能。',
     '- **拿不准就问**：破坏性操作（删文件/大范围重构）或需求不明确时，先问用户确认方向。',
-  ].join('\n');
+  ];
+  // 追加 Skill 增强的 system prompt
+  const skillPrompt = getSkillPrompts();
+  if (skillPrompt) basePrompt.push('', '# [已加载 Skill]', skillPrompt);
+  return basePrompt.join('\n');
 }
 
 function modelCaps(model) {
@@ -225,9 +231,128 @@ async function runOpenAI({ config, messages, onEvent, signal, toolCtx }) {
   return assistantText.trim();
 }
 
+// ---------- DeepSeek ----------
+async function runDeepSeek({ config, messages, onEvent, signal, toolCtx }) {
+  const c = config.deepseek;
+  if (!c.apiKey) throw new Error('还没填 DeepSeek 的 API Key，点右上角设置。');
+  const client = new OpenAI({ apiKey: c.apiKey, baseURL: c.baseUrl || 'https://api.deepseek.com' });
+
+  // DeepSeek 使用 OpenAI 兼容接口，直接复用 OpenAI 逻辑
+  return runOpenAI({ config: { ...config, openai: c }, messages, onEvent, signal, toolCtx });
+}
+
+// ---------- Gemini ----------
+function toGeminiTools() {
+  return TOOLS.map((t) => ({
+    name: t.name,
+    description: t.description,
+    parameters: {
+      type: 'OBJECT',
+      properties: Object.fromEntries(
+        Object.entries(t.input_schema.properties || {}).map(([k, v]) => [
+          k,
+          { type: (v.type || 'STRING').toUpperCase(), description: v.description },
+        ])
+      ),
+      required: t.input_schema.required || [],
+    },
+  }));
+}
+
+async function runGemini({ config, messages, onEvent, signal, toolCtx }) {
+  const c = config.gemini;
+  if (!c.apiKey) throw new Error('还没填 Gemini 的 API Key，点右上角设置。');
+  const genAI = new GoogleGenerativeAI(c.apiKey);
+  const model = genAI.getGenerativeModel({
+    model: c.model || 'gemini-2.0-flash-exp',
+    tools: config.enableTools ? [{ functionDeclarations: toGeminiTools() }] : undefined,
+    systemInstruction: systemPrompt(config),
+  });
+
+  const history = [];
+  for (const m of messages) {
+    history.push({ role: m.role === 'assistant' ? 'model' : 'user', parts: [{ text: m.content }] });
+  }
+
+  const chat = model.startChat({ history });
+  let assistantText = '';
+  const maxTurns = config.maxTurns || 200;
+
+  for (let turn = 0; turn < maxTurns; turn++) {
+    const result = await chat.sendMessageStream('继续', { signal });
+    let hasFunctionCall = false;
+
+    for await (const chunk of result.stream) {
+      const candidate = chunk.candidates?.[0];
+      if (!candidate) continue;
+
+      const textPart = candidate.content?.parts?.find((p) => p.text);
+      if (textPart?.text) {
+        if (!assistantText) onEvent({ type: 'text_start' });
+        assistantText += textPart.text;
+        onEvent({ type: 'text_delta', text: textPart.text });
+      }
+
+      const fnCalls = candidate.content?.parts?.filter((p) => p.functionCall) || [];
+      if (fnCalls.length) hasFunctionCall = true;
+    }
+
+    const response = await result.response;
+    const fnCalls = response.candidates?.[0]?.content?.parts?.filter((p) => p.functionCall) || [];
+
+    if (!hasFunctionCall || !fnCalls.length) break;
+
+    const functionResponses = [];
+    for (const fc of fnCalls) {
+      const name = fc.functionCall.name;
+      const args = fc.functionCall.args || {};
+      onEvent({ type: 'tool_use', id: name, name, summary: summarizeToolInput(name, args) });
+      const r = await executeTool(name, args, toolCtx);
+      onEvent({ type: 'tool_result', id: name, name, ok: !r.isError, preview: r.text });
+
+      functionResponses.push({
+        functionResponse: {
+          name,
+          response: { result: r.text },
+        },
+      });
+    }
+
+    await chat.sendMessage(functionResponses);
+  }
+
+  return assistantText.trim();
+}
+
+// ---------- Kimi (Moonshot) ----------
+async function runKimi({ config, messages, onEvent, signal, toolCtx }) {
+  const c = config.kimi;
+  if (!c.apiKey) throw new Error('还没填 Kimi 的 API Key，点右上角设置。');
+  const client = new OpenAI({ apiKey: c.apiKey, baseURL: c.baseUrl || 'https://api.moonshot.cn/v1' });
+
+  // Kimi 使用 OpenAI 兼容接口
+  return runOpenAI({ config: { ...config, openai: c }, messages, onEvent, signal, toolCtx });
+}
+
+// ---------- 豆包 (Doubao) ----------
+async function runDoubao({ config, messages, onEvent, signal, toolCtx }) {
+  const c = config.doubao;
+  if (!c.apiKey) throw new Error('还没填豆包的 API Key，点右上角设置。');
+  if (!c.model) throw new Error('豆包需要填写接入点 ID（model 字段），如 ep-xxx');
+  const client = new OpenAI({ apiKey: c.apiKey, baseURL: c.baseUrl || 'https://ark.cn-beijing.volces.com/api/v3' });
+
+  // 豆包使用 OpenAI 兼容接口
+  return runOpenAI({ config: { ...config, openai: c }, messages, onEvent, signal, toolCtx });
+}
+
 async function runAgent(opts) {
-  if (opts.config.provider === 'openai') return runOpenAI(opts);
-  return runAnthropic(opts);
+  const provider = opts.config.provider;
+  if (provider === 'openai') return runOpenAI(opts);
+  if (provider === 'deepseek') return runDeepSeek(opts);
+  if (provider === 'gemini') return runGemini(opts);
+  if (provider === 'kimi') return runKimi(opts);
+  if (provider === 'doubao') return runDoubao(opts);
+  return runAnthropic(opts); // 默认 Claude
 }
 
 module.exports = { runAgent };

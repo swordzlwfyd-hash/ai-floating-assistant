@@ -30,6 +30,10 @@
         <select id="provider">
           <option value="anthropic">Claude（Anthropic · 最强，支持工具+联网）</option>
           <option value="openai">OpenAI 兼容 / Ollama</option>
+          <option value="deepseek">DeepSeek（深度求索 · 性价比高）</option>
+          <option value="gemini">Google Gemini（谷歌 · 多模态强）</option>
+          <option value="kimi">Kimi（月之暗面 · 长上下文）</option>
+          <option value="doubao">豆包（字节跳动 · 国内快）</option>
         </select>
       </label>
 
@@ -61,10 +65,54 @@
           <input id="openaiBase" type="text" placeholder="https://api.openai.com" />
         </label>
         <label class="field">模型名
-          <input id="openaiModel" type="text" placeholder="gpt-4o-mini" />
+          <input id="openaiModel" type="text" placeholder="gpt-4o" />
         </label>
         <label class="field">API Key
           <input id="openaiKey" type="password" placeholder="sk-..." />
+        </label>
+      </div>
+
+      <div id="deepseekFields" class="hidden">
+        <label class="field">模型名
+          <input id="deepseekModel" type="text" placeholder="deepseek-chat" />
+        </label>
+        <label class="field">DeepSeek API Key
+          <input id="deepseekKey" type="password" placeholder="sk-..." />
+        </label>
+      </div>
+
+      <div id="geminiFields" class="hidden">
+        <label class="field">Gemini 模型
+          <select id="geminiModel">
+            <option value="gemini-2.0-flash-exp">gemini-2.0-flash-exp（推荐）</option>
+            <option value="gemini-1.5-pro">gemini-1.5-pro</option>
+            <option value="gemini-1.5-flash">gemini-1.5-flash</option>
+          </select>
+        </label>
+        <label class="field">Google AI API Key
+          <input id="geminiKey" type="password" placeholder="AI..." />
+        </label>
+      </div>
+
+      <div id="kimiFields" class="hidden">
+        <label class="field">Kimi 模型
+          <select id="kimiModel">
+            <option value="moonshot-v1-128k">moonshot-v1-128k（推荐）</option>
+            <option value="moonshot-v1-32k">moonshot-v1-32k</option>
+            <option value="moonshot-v1-8k">moonshot-v1-8k</option>
+          </select>
+        </label>
+        <label class="field">Kimi API Key
+          <input id="kimiKey" type="password" placeholder="sk-..." />
+        </label>
+      </div>
+
+      <div id="doubaoFields" class="hidden">
+        <label class="field">接入点 ID（如 ep-xxx）
+          <input id="doubaoModel" type="text" placeholder="ep-20240101000000-xxxxx" />
+        </label>
+        <label class="field">豆包 API Key
+          <input id="doubaoKey" type="password" placeholder="..." />
         </label>
       </div>
 
@@ -90,9 +138,20 @@
       <label class="check"><input id="autoApproveDangerous" type="checkbox" /> 自动放行危险操作（rm -rf / sudo 等，谨慎开启）</label>
 
       <p class="hint">
-        <strong>智能信任分级</strong>：读文件/搜索永远直接执行；中等风险默认放行；危险操作默认弹窗确认（可上方全开）。<br />
+        <strong>智能信任分级</strong>：读文件/搜索永远直接执行；中等风险默认放行；危险操作默认弹窗确认（可上方全开）。
         OpenAI 兼容接口可填 DeepSeek / Kimi / 豆包 / Ollama 等。联网搜索为 Claude 专属。
       </p>
+
+      <!-- Skill 管理面板 -->
+      <div class="skill-section">
+        <h4>🧩 Skill 管理</h4>
+        <p class="skill-hint">Skill 存放在 <code id="skillsDir">~</code> 目录下，把 .js 文件放进去即可安装。</p>
+        <div id="skillsList" class="skills-list">
+          <span class="skill-loading">加载中…</span>
+        </div>
+        <button id="openSkillsDir" class="primary-btn" style="margin-top:8px;align-self:flex-start">📁 打开 Skill 目录</button>
+      </div>
+
       <button id="saveSettings" class="primary-btn">保存</button>
     </div>
 

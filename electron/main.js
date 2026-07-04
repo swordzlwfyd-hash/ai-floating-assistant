@@ -2,6 +2,7 @@ const { app, BrowserWindow, ipcMain, screen, globalShortcut } = require('electro
 const path = require('path');
 const { loadConfig, saveConfig, loadHistory, saveHistory } = require('./config');
 const { runAgent } = require('./providers');
+const { loadSkills, getAllSkills, toggleSkill, SKILLS_DIR } = require('./skills');
 
 const BALL = 76;
 const PANEL_W = 440;
@@ -99,6 +100,9 @@ ipcMain.on('drag-window', (_e, { dx, dy }) => {
 // ---------- 配置 & 历史 ----------
 ipcMain.handle('config:get', () => loadConfig());
 ipcMain.handle('config:set', (_e, cfg) => saveConfig(cfg));
+ipcMain.handle('skills:list', () => getAllSkills());
+ipcMain.handle('skills:toggle', (_e, { skillId, enabled }) => toggleSkill(skillId, enabled));
+ipcMain.handle('skills:dir', () => SKILLS_DIR);
 ipcMain.handle('history:get', () => loadHistory());
 ipcMain.handle('history:clear', () => {
   saveHistory([]);
@@ -182,6 +186,7 @@ ipcMain.handle('chat:send', async (_e, { text }) => {
 });
 
 app.whenReady().then(() => {
+  loadSkills(); // 加载 Skill 系统
   createWindow();
   // 全局快捷键：唤起 / 展开助手
   globalShortcut.register('CommandOrControl+Shift+Space', toggleWindow);

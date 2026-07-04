@@ -29,12 +29,24 @@ const stopBtn = document.getElementById('stopBtn');
 const providerSel = document.getElementById('provider');
 const anthropicFields = document.getElementById('anthropicFields');
 const openaiFields = document.getElementById('openaiFields');
+const deepseekFields = document.getElementById('deepseekFields');
+const geminiFields = document.getElementById('geminiFields');
+const kimiFields = document.getElementById('kimiFields');
+const doubaoFields = document.getElementById('doubaoFields');
 const anthropicModel = document.getElementById('anthropicModel');
 const anthropicEffort = document.getElementById('anthropicEffort');
 const anthropicKey = document.getElementById('anthropicKey');
 const openaiBase = document.getElementById('openaiBase');
 const openaiModel = document.getElementById('openaiModel');
 const openaiKey = document.getElementById('openaiKey');
+const deepseekModel = document.getElementById('deepseekModel');
+const deepseekKey = document.getElementById('deepseekKey');
+const geminiModel = document.getElementById('geminiModel');
+const geminiKey = document.getElementById('geminiKey');
+const kimiModel = document.getElementById('kimiModel');
+const kimiKey = document.getElementById('kimiKey');
+const doubaoModel = document.getElementById('doubaoModel');
+const doubaoKey = document.getElementById('doubaoKey');
 const workspace = document.getElementById('workspace');
 const recordingsDir = document.getElementById('recordingsDir');
 const maxTurns = document.getElementById('maxTurns');
@@ -42,9 +54,65 @@ const commandTimeout = document.getElementById('commandTimeout');
 const enableTools = document.getElementById('enableTools');
 const autoApproveModerate = document.getElementById('autoApproveModerate');
 const autoApproveDangerous = document.getElementById('autoApproveDangerous');
+const skillsList = document.getElementById('skillsList');
+const skillsDir = document.getElementById('skillsDir');
+const openSkillsDir = document.getElementById('openSkillsDir');
 
 let config = null;
 let busy = false;
+
+// ===== Skill 管理 =====
+async function loadSkills() {
+  try {
+    const skills = await window.api.listSkills();
+    const dir = await window.api.getSkillsDir();
+    skillsDir.textContent = dir;
+
+    if (skills.length === 0) {
+      skillsList.innerHTML = '<span style="color:var(--soft);font-size:12px">暂无 Skill，把 .js 文件放到上方目录即可安装</span>';
+      return;
+    }
+
+    skillsList.innerHTML = skills.map((s) => `
+      <div class="skill-item ${s.enabled ? '' : 'disabled'}">
+        <div class="skill-info">
+          <span class="skill-name">${s.name}</span>
+          <span class="skill-desc">${s.description}</span>
+          <span class="skill-meta">v${s.version} · ${s.author} · ${s.toolCount} 个工具</span>
+        </div>
+        <label class="skill-toggle">
+          <input type="checkbox" ${s.enabled ? 'checked' : ''} data-skill="${s.id}">
+          <span>${s.enabled ? '已启用' : '已禁用'}</span>
+        </label>
+      </div>
+    `).join('');
+
+    // 绑定开关事件
+    skillsList.querySelectorAll('input[data-skill]').forEach((cb) => {
+      cb.addEventListener('change', async () => {
+        const skillId = cb.dataset.skill;
+        const enabled = cb.checked;
+        await window.api.toggleSkill(skillId, enabled);
+        loadSkills(); // 刷新列表
+        systemNote(`${enabled ? '✅' : '⛔'} Skill 已${enabled ? '启用' : '禁用'}，下次发送消息时生效`);
+      });
+    });
+  } catch (err) {
+    skillsList.innerHTML = '<span style="color:#f56565;font-size:12px">加载 Skill 失败</span>';
+  }
+}
+
+openSkillsDir.addEventListener('click', async () => {
+  const dir = await window.api.getSkillsDir();
+  window.api.runCommand(`open "${dir}"`, {}); // 在 Finder 中打开
+});
+
+// 在设置面板打开时加载 skill 列表
+settingsBtn.addEventListener('click', () => {
+  settings.classList.toggle('hidden');
+  if (!settings.classList.contains('hidden')) loadSkills();
+});
+
 
 // ===== 面板展开 / 收起 =====
 let dragMoved = false;
@@ -69,9 +137,13 @@ window.api.onExpanded((v) => {
 settingsBtn.addEventListener('click', () => settings.classList.toggle('hidden'));
 providerSel.addEventListener('change', syncProviderFields);
 function syncProviderFields() {
-  const isOpenai = providerSel.value === 'openai';
-  openaiFields.classList.toggle('hidden', !isOpenai);
-  anthropicFields.classList.toggle('hidden', isOpenai);
+  const p = providerSel.value;
+  anthropicFields.classList.toggle('hidden', p !== 'anthropic');
+  openaiFields.classList.toggle('hidden', p !== 'openai');
+  deepseekFields.classList.toggle('hidden', p !== 'deepseek');
+  geminiFields.classList.toggle('hidden', p !== 'gemini');
+  kimiFields.classList.toggle('hidden', p !== 'kimi');
+  doubaoFields.classList.toggle('hidden', p !== 'doubao');
 }
 
 async function loadConfigUI() {
@@ -83,6 +155,14 @@ async function loadConfigUI() {
   openaiBase.value = config.openai.baseUrl || '';
   openaiModel.value = config.openai.model || '';
   openaiKey.value = config.openai.apiKey || '';
+  deepseekModel.value = config.deepseek?.model || 'deepseek-chat';
+  deepseekKey.value = config.deepseek?.apiKey || '';
+  geminiModel.value = config.gemini?.model || 'gemini-2.0-flash-exp';
+  geminiKey.value = config.gemini?.apiKey || '';
+  kimiModel.value = config.kimi?.model || 'moonshot-v1-128k';
+  kimiKey.value = config.kimi?.apiKey || '';
+  doubaoModel.value = config.doubao?.model || '';
+  doubaoKey.value = config.doubao?.apiKey || '';
   workspace.value = config.workspace || '';
   recordingsDir.value = config.recordingsDir || '';
   maxTurns.value = config.maxTurns || 200;
@@ -111,7 +191,26 @@ saveSettings.addEventListener('click', async () => {
     openai: {
       apiKey: openaiKey.value.trim(),
       baseUrl: openaiBase.value.trim() || 'https://api.openai.com',
-      model: openaiModel.value.trim() || 'gpt-4o-mini',
+      model: openaiModel.value.trim() || 'gpt-4o',
+    },
+    deepseek: {
+      apiKey: deepseekKey.value.trim(),
+      baseUrl: 'https://api.deepseek.com',
+      model: deepseekModel.value.trim() || 'deepseek-chat',
+    },
+    gemini: {
+      apiKey: geminiKey.value.trim(),
+      model: geminiModel.value || 'gemini-2.0-flash-exp',
+    },
+    kimi: {
+      apiKey: kimiKey.value.trim(),
+      baseUrl: 'https://api.moonshot.cn',
+      model: kimiModel.value || 'moonshot-v1-128k',
+    },
+    doubao: {
+      apiKey: doubaoKey.value.trim(),
+      baseUrl: 'https://ark.cn-beijing.volces.com',
+      model: doubaoModel.value.trim(),
     },
   };
   config = await window.api.setConfig(next);

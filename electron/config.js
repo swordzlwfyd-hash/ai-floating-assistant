@@ -11,7 +11,7 @@ function historyPath() {
 }
 
 const DEFAULT_CONFIG = {
-  provider: 'anthropic', // anthropic | openai
+  provider: 'anthropic', // anthropic | openai | deepseek | gemini | kimi | doubao
   enableTools: true, // 是否允许智能体调用工具
   workspace: '', // 工作区目录（项目根），空则用 home
   recordingsDir: '', // 录屏保存目录，空则用桌面
@@ -27,7 +27,26 @@ const DEFAULT_CONFIG = {
   openai: {
     apiKey: '',
     baseUrl: 'https://api.openai.com', // Ollama 用 http://localhost:11434
-    model: 'gpt-4o-mini',
+    model: 'gpt-4o',
+  },
+  deepseek: {
+    apiKey: '',
+    baseUrl: 'https://api.deepseek.com',
+    model: 'deepseek-chat',
+  },
+  gemini: {
+    apiKey: '',
+    model: 'gemini-2.0-flash-exp', // gemini-2.0-flash-exp / gemini-1.5-pro
+  },
+  kimi: {
+    apiKey: '',
+    baseUrl: 'https://api.moonshot.cn',
+    model: 'moonshot-v1-128k',
+  },
+  doubao: {
+    apiKey: '',
+    baseUrl: 'https://ark.cn-beijing.volces.com',
+    model: '', // 需填写你的接入点 ID（如 ep-xxx）
   },
 };
 

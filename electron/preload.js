@@ -22,4 +22,9 @@ contextBridge.exposeInMainWorld('api', {
   // 工具批准
   respondPermission: (id, approved, trustSession) =>
     ipcRenderer.send('tool:permission-response', { id, approved, trustSession }),
+
+  // Skill 管理
+  listSkills: () => ipcRenderer.invoke('skills:list'),
+  toggleSkill: (skillId, enabled) => ipcRenderer.invoke('skills:toggle', { skillId, enabled }),
+  getSkillsDir: () => ipcRenderer.invoke('skills:dir'),
 });

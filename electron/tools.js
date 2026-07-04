@@ -6,6 +6,7 @@ const fs = require('fs');
 const fsp = fs.promises;
 const os = require('os');
 const path = require('path');
+const { getSkillTools } = require('./skills');
 
 // 浏览器自动化（延迟加载，避免启动开销）
 let puppeteer = null;
@@ -887,6 +888,12 @@ async function executeTool(name, input, ctx) {
       case 'stop_recording':
         return await stopRecording(input, ctx);
       default:
+        // 尝试执行 Skill 工具
+        const skillTools = getSkillTools();
+        const skillTool = skillTools.find((t) => t.name === name);
+        if (skillTool && typeof skillTool.execute === 'function') {
+          return await skillTool.execute(input, ctx);
+        }
         return { text: `未知工具：${name}`, isError: true };
     }
   } catch (err) {
@@ -948,4 +955,15 @@ function summarizeToolInput(name, input) {
   }
 }
 
-module.exports = { TOOLS, executeTool, summarizeToolInput, classifyRisk };
+// 导出时动态合并 Skill 工具
+function getAllTools() {
+  const skillTools = getSkillTools();
+  return [...TOOLS, ...skillTools];
+}
+
+module.exports = {
+  get TOOLS() { return getAllTools(); },
+  executeTool,
+  summarizeToolInput,
+  classifyRisk
+};
