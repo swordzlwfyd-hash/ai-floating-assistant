@@ -106,10 +106,38 @@ th { color: var(--soft); font-size:12px; text-transform:uppercase; letter-spacin
 footer { text-align:center; padding:40px 20px; color:var(--soft); font-size:13px }
 footer a { color:var(--accent); text-decoration:none }
 
+/* Platform tabs */
+.platform-tabs { display:flex; gap:8px; justify-content:center; margin-bottom:32px }
+.platform-tab {
+  padding:10px 28px; border-radius:10px; font-size:15px; font-weight:600;
+  border:1px solid var(--border); background:var(--card); color:var(--soft); cursor:pointer;
+  transition: all .15s;
+}
+.platform-tab.active { background:var(--accent); color:#fff; border-color:var(--accent) }
+.platform-tab:hover:not(.active) { border-color:var(--accent) }
+.platform-guide { display:none }
+.platform-guide.active { display:block }
+
+/* kbd style */
+kbd {
+  display:inline-block; padding:2px 6px; border-radius:4px;
+  background:#1a1d27; border:1px solid var(--border); font-size:12px; font-family:inherit;
+}
+
+/* Mobile section */
+section ul { padding-left:24px }
+section li { color:var(--soft); font-size:14px; line-height:1.8 }
+
 /* Responsive */
 @media (max-width:600px) {
   .hero h1 { font-size:1.8rem }
   .grid { grid-template-columns:1fr }
+  .platform-tabs { flex-direction:column; align-items:stretch }
+  .platform-tab { text-align:center }
+  .btn-row { flex-direction:column }
+  .btn { justify-content:center }
+  table { font-size:12px }
+  th, td { padding:6px 8px }
 }
 </style>
 </head>
@@ -208,41 +236,186 @@ footer a { color:var(--accent); text-decoration:none }
 <!-- ====== Setup ====== -->
 <section id="setup">
   <h2>⬇️ 安装指南</h2>
+
+  <!-- 平台选择标签 -->
+  <div class="platform-tabs">
+    <button class="platform-tab active" data-os="mac">🍎 macOS</button>
+    <button class="platform-tab" data-os="win">🪟 Windows</button>
+  </div>
+
+  <!-- ===== Mac ===== -->
+  <div class="platform-guide active" id="guide-mac">
   <div class="steps">
     <div class="step-num">1</div>
     <div class="step-body">
-      <h3>装 Node.js（只需一次）</h3>
-      <p><a href="https://nodejs.org" style="color:var(--accent)">nodejs.org</a> 下载 LTS 版，或 <code>brew install node</code></p>
+      <h3>安装 Node.js（只需一次）</h3>
+      <p>去 <a href="https://nodejs.org" style="color:var(--accent);font-weight:600">nodejs.org</a>，点左边绿色的大按钮下载 <strong>LTS 版</strong>（.pkg 安装包）。</p>
+      <p style="color:var(--soft);font-size:13px;margin-top:4px">下载后双击 .pkg 文件 → 一路点「继续」→ 输入密码 → 完成。</p>
+      <p style="color:var(--soft);font-size:13px">或者用 Homebrew：<code>brew install node</code></p>
     </div>
   </div>
+
+  <div class="steps" id="download-step">
+    <div class="step-num">2</div>
+    <div class="step-body">
+      <h3>下载项目</h3>
+      <p style="margin-bottom:10px">点击下面按钮下载 ZIP，然后双击解压：</p>
+      <a href="https://github.com/swordzlwfyd-hash/ai-floating-assistant/archive/refs/heads/main.zip"
+         style="display:inline-block;padding:12px 24px;background:var(--accent);color:#fff;border-radius:10px;text-decoration:none;font-weight:600;font-size:15px">
+         ⬇️ 下载 ai-floating-assistant.zip
+      </a>
+      <p style="color:var(--soft);font-size:13px;margin-top:10px">解压后把 <code>ai-floating-assistant-main</code> 文件夹拖到桌面，重命名为 <code>ai-floating-assistant</code></p>
+    </div>
+  </div>
+
+  <div class="steps">
+    <div class="step-num">3</div>
+    <div class="step-body">
+      <h3>打开终端</h3>
+      <p>按 <kbd>⌘ Command</kbd> + <kbd>空格</kbd>，输入 <code>Terminal</code>，回车。</p>
+    </div>
+  </div>
+
+  <div class="steps">
+    <div class="step-num">4</div>
+    <div class="step-body">
+      <h3>安装依赖 & 启动</h3>
+      <pre>cd ~/Desktop/ai-floating-assistant-main
+<span style="color:var(--soft)"># 如果文件夹名是 ai-floating-assistant 就改成：</span>
+<span style="color:var(--soft)"># cd ~/Desktop/ai-floating-assistant</span>
+
+npm install</pre>
+      <p style="color:var(--soft);font-size:13px;margin-top:4px">安装需要 1-2 分钟，看到进度条走完就行。</p>
+      <pre>npm start</pre>
+      <p style="color:var(--soft);font-size:13px;margin-top:6px">✅ 屏幕右上角出现蓝紫色悬浮球🎉 点击它 → ⚙ 设置 → 填 API Key → 开始用</p>
+    </div>
+  </div>
+
+  <div class="steps">
+    <div class="step-num">5</div>
+    <div class="step-body">
+      <h3>可选：安装浏览器 + ffmpeg</h3>
+      <p style="color:var(--soft);font-size:13px">浏览器自动化需要 Chrome，录屏需要 ffmpeg。<strong>不装也能用核心编码功能。</strong></p>
+      <pre style="margin-top:6px">brew install --cask google-chrome
+brew install ffmpeg</pre>
+    </div>
+  </div>
+  </div>
+
+  <!-- ===== Windows ===== -->
+  <div class="platform-guide" id="guide-win">
+  <div class="steps">
+    <div class="step-num">1</div>
+    <div class="step-body">
+      <h3>安装 Node.js（只需一次）</h3>
+      <p>去 <a href="https://nodejs.org" style="color:var(--accent);font-weight:600">nodejs.org</a>，点左边绿色大按钮下载 <strong>LTS 版</strong>（.msi 安装包）。</p>
+      <p style="color:var(--soft);font-size:13px;margin-top:4px">下载后双击 .msi → 一路点 Next → 勾选 <strong>"Automatically install the necessary tools"</strong> → Install → 完成。</p>
+    </div>
+  </div>
+
   <div class="steps">
     <div class="step-num">2</div>
     <div class="step-body">
       <h3>下载项目</h3>
-      <p style="margin-bottom:8px"><strong>方式一（推荐）：</strong>直接下载 ZIP</p>
+      <p style="margin-bottom:10px">点击下面按钮下载 ZIP：</p>
       <a href="https://github.com/swordzlwfyd-hash/ai-floating-assistant/archive/refs/heads/main.zip"
-         style="display:inline-block;padding:10px 20px;background:var(--accent);color:#fff;border-radius:8px;text-decoration:none;font-weight:600">
+         style="display:inline-block;padding:12px 24px;background:var(--accent);color:#fff;border-radius:10px;text-decoration:none;font-weight:600;font-size:15px">
          ⬇️ 下载 ai-floating-assistant.zip
       </a>
-      <p style="margin-top:14px;margin-bottom:8px"><strong>方式二：</strong>git clone（需装 git）</p>
-      <pre>git clone https://github.com/swordzlwfyd-hash/ai-floating-assistant.git
-cd ai-floating-assistant</pre>
-      <p style="color:var(--soft); font-size:13px; margin-top:6px">下载 ZIP 的话解压后在终端里 cd 到解压目录</p>
+      <p style="color:var(--soft);font-size:13px;margin-top:10px">
+        下载完成后：右键 zip 文件 → <strong>全部解压</strong> → 把解压出的文件夹拖到桌面。<br>
+        把文件夹重命名为 <code>ai-floating-assistant</code>
+      </p>
     </div>
   </div>
+
   <div class="steps">
     <div class="step-num">3</div>
     <div class="step-body">
-      <h3>安装依赖</h3>
-      <pre>npm install</pre>
+      <h3>打开 PowerShell</h3>
+      <p>按 <kbd>Win</kbd> + <kbd>X</kbd> → 选「Windows PowerShell」或「终端」。</p>
+      <p style="color:var(--soft);font-size:13px">或者按 Win 键，输入 <code>powershell</code>，回车。</p>
     </div>
   </div>
+
   <div class="steps">
     <div class="step-num">4</div>
     <div class="step-body">
-      <h3>启动</h3>
+      <h3>安装依赖 & 启动</h3>
+      <pre>cd $env:USERPROFILE\Desktop\ai-floating-assistant-main
+<span style="color:var(--soft)"># 如果文件夹名是 ai-floating-assistant 就改成：</span>
+<span style="color:var(--soft)"># cd $env:USERPROFILE\Desktop\ai-floating-assistant</span>
+
+npm install</pre>
+      <p style="color:var(--soft);font-size:13px;margin-top:4px">安装需要 2-3 分钟，等进度条走完。</p>
       <pre>npm start</pre>
-      <p style="color:var(--soft); font-size:13px; margin-top:6px">屏幕右上角出现悬浮球 → 点击 → ⚙ 填 API Key → 开始用</p>
+      <p style="color:var(--soft);font-size:13px;margin-top:6px">✅ 屏幕右上角出现蓝紫色悬浮球🎉 点击它 → ⚙ 设置 → 填 API Key → 开始用</p>
+    </div>
+  </div>
+
+  <div class="steps">
+    <div class="step-num">5</div>
+    <div class="step-body">
+      <h3>可选：安装浏览器 + ffmpeg</h3>
+      <p style="color:var(--soft);font-size:13px">Windows 自带 Edge 浏览器，浏览器自动化自动检测可用。<strong>ffmpeg 只有录屏需要。</strong></p>
+      <p style="margin-top:6px;font-size:13px">
+        Chrome 去 <a href="https://google.com/chrome" style="color:var(--accent)">google.com/chrome</a> 下载安装。<br>
+        ffmpeg 去 <a href="https://ffmpeg.org/download.html" style="color:var(--accent)">ffmpeg.org</a> 下载 → 解压 → 把 bin 目录加到系统 PATH。
+      </p>
+    </div>
+  </div>
+  </div>
+
+</section>
+
+<!-- ====== Mobile / API Key ====== -->
+<section>
+  <h2>📱 手机能装吗？</h2>
+  <div class="card" style="max-width:640px;margin:0 auto">
+    <div class="icon">📲</div>
+    <h3>手机上可以浏览、下载，但不能直接运行</h3>
+    <p>这是个 <strong>Electron 桌面应用</strong>，需要电脑（macOS / Windows / Linux）才能运行。</p>
+    <p style="margin-top:8px">但你可以：</p>
+    <ul style="padding-left:20px;color:var(--soft);margin-top:6px;line-height:2">
+      <li>在手机上打开这个网站，<strong>下载 ZIP 文件</strong>传到电脑</li>
+      <li>📋 <strong>复制安装命令</strong>发给电脑（微信/Telegram/AirDrop 等）</li>
+      <li>🔑 手机上打开 <a href="https://console.anthropic.com" style="color:var(--accent)">console.anthropic.com</a> 注册获取 API Key</li>
+      <li>浏览功能说明和工具清单</li>
+    </ul>
+    <p style="margin-top:12px;padding:10px;background:rgba(91,127,255,0.1);border-radius:8px;font-size:13px">
+      💡 <strong>Tips：</strong>把这段命令发到电脑上：<br>
+      <code style="background:#080a10;padding:4px 8px;border-radius:4px;word-break:break-all">git clone https://github.com/swordzlwfyd-hash/ai-floating-assistant.git && cd ai-floating-assistant && npm install && npm start</code>
+    </p>
+  </div>
+</section>
+
+<!-- ====== API Key ====== -->
+<section>
+  <h2>🔑 获取 API Key</h2>
+  <div class="grid">
+    <div class="card">
+      <h3>Claude（最推荐）</h3>
+      <p>最强的编码能力 + 联网搜索。去 <a href="https://console.anthropic.com" style="color:var(--accent)">console.anthropic.com</a> 注册，创建 API Key。</p>
+    </div>
+    <div class="card">
+      <h3>DeepSeek（最便宜）</h3>
+      <p>性价比最高。去 <a href="https://platform.deepseek.com" style="color:var(--accent)">platform.deepseek.com</a> 注册，充值 10 元够用很久。</p>
+    </div>
+    <div class="card">
+      <h3>Gemini（免费额度）</h3>
+      <p>谷歌 AI，有免费额度。去 <a href="https://aistudio.google.com" style="color:var(--accent)">aistudio.google.com</a> 获取 API Key。</p>
+    </div>
+    <div class="card">
+      <h3>Kimi / 豆包</h3>
+      <p>国内厂商，速度快。Kimi 去 <a href="https://platform.moonshot.cn" style="color:var(--accent)">platform.moonshot.cn</a>，豆包去火山引擎控制台。</p>
+    </div>
+    <div class="card">
+      <h3>本地 Ollama（完全免费）</h3>
+      <p>装 Ollama 后用本地模型，不上传数据。选 OpenAI 兼容模式，URL 填 <code>http://localhost:11434</code>。</p>
+    </div>
+    <div class="card">
+      <h3>没有 Key？先试用</h3>
+      <p>选 <strong>OpenAI 兼容</strong> → Base URL 填 <code>http://localhost:11434</code> → Model 填 <code>llama3.1</code>（需先装 Ollama）。</p>
     </div>
   </div>
 </section>
@@ -259,6 +432,24 @@ cd ai-floating-assistant</pre>
 
 <footer>
   <p>AI 悬浮球助手 · 开源 MIT 协议 · 驱动引擎 <a href="https://anthropic.com/claude">Claude by Anthropic</a></p>
+  <p style="margin-top:4px;font-size:12px">支持 macOS / Windows / Linux 桌面系统</p>
 </footer>
+
+<script>
+// Platform tabs switching
+document.querySelectorAll('.platform-tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.platform-tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.platform-guide').forEach(g => g.classList.remove('active'));
+    tab.classList.add('active');
+    document.getElementById('guide-' + tab.dataset.os).classList.add('active');
+  });
+});
+
+// Detect OS and pre-select tab
+if (navigator.platform.toLowerCase().includes('win')) {
+  document.querySelectorAll('.platform-tab')[1]?.click();
+}
+</script>
 </body>
 </html>
